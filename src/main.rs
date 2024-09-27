@@ -1,6 +1,6 @@
 use crate::deviceinfo::DeviceInfo;
 use crate::mapping::*;
-use crate::remapper::*;
+// use crate::remapper;
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::PathBuf;
@@ -82,6 +82,7 @@ pub fn list_keys() -> Result<()> {
 
 fn setup_logger() {
     let mut builder = env_logger::Builder::new();
+    // Arash note: Change to log::LevelFilter::Trace to get more detailed logs.
     builder.filter_level(log::LevelFilter::Info);
     let env = env_logger::Env::new()
         .filter("EVREMAP_LOG")
@@ -161,7 +162,7 @@ fn main() -> Result<()> {
             device_name,
             phys,
             wait_for_device,
-        } => {
+        } => Ok({
             let mut mapping_config = MappingConfig::from_file(&config_file).context(format!(
                 "loading MappingConfig from {}",
                 config_file.display()
@@ -188,8 +189,7 @@ fn main() -> Result<()> {
             let device_info =
                 get_device(device_name, mapping_config.phys.as_deref(), wait_for_device)?;
 
-            let mut mapper = InputMapper::create_mapper(device_info.path, mapping_config.mappings)?;
-            mapper.run_mapper()
-        }
+            remapper::run_forever(device_info.path, &mapping_config.mappings)?;
+        }),
     }
 }

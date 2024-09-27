@@ -20,9 +20,6 @@ impl MappingConfig {
         let config_file: ConfigFile =
             toml::from_str(&toml_data).context(format!("parsing toml from {}", path.display()))?;
         let mut mappings = vec![];
-        for dual in config_file.dual_role {
-            mappings.push(dual.into());
-        }
         for remap in config_file.remap {
             mappings.push(remap.into());
         }
@@ -36,11 +33,7 @@ impl MappingConfig {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Mapping {
-    DualRole {
-        input: KeyCode,
-        hold: Vec<KeyCode>,
-        tap: Vec<KeyCode>,
-    },
+    // Arash note: I removed DualRole to simplify the code base.
     Remap {
         input: HashSet<KeyCode>,
         output: HashSet<KeyCode>,
@@ -81,23 +74,6 @@ impl std::convert::TryFrom<String> for KeyCodeWrapper {
 }
 
 #[derive(Debug, Deserialize)]
-struct DualRoleConfig {
-    input: KeyCodeWrapper,
-    hold: Vec<KeyCodeWrapper>,
-    tap: Vec<KeyCodeWrapper>,
-}
-
-impl Into<Mapping> for DualRoleConfig {
-    fn into(self) -> Mapping {
-        Mapping::DualRole {
-            input: self.input.into(),
-            hold: self.hold.into_iter().map(Into::into).collect(),
-            tap: self.tap.into_iter().map(Into::into).collect(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
 struct RemapConfig {
     input: Vec<KeyCodeWrapper>,
     output: Vec<KeyCodeWrapper>,
@@ -119,9 +95,6 @@ struct ConfigFile {
 
     #[serde(default)]
     phys: Option<String>,
-
-    #[serde(default)]
-    dual_role: Vec<DualRoleConfig>,
 
     #[serde(default)]
     remap: Vec<RemapConfig>,
