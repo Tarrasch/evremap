@@ -316,4 +316,119 @@ mod tests {
             }]
         );
     }
+
+    #[test]
+    fn handles_arashs_arrow_up_key_binding_release_key_first() {
+        let mut machine = Machine::new(&vec![Mapping::Remap {
+            input: HashSet::from([ EV_KEY::KEY_RIGHTALT, EV_KEY::KEY_K]),
+            output: HashSet::from([EV_KEY::KEY_UP]),
+        }]);
+
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_K,
+                key_event_type: KeyEventType::Press,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_UP,
+                key_event_type: KeyEventType::Press,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_K,
+                key_event_type: KeyEventType::Release,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_UP,
+                key_event_type: KeyEventType::Release,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Release,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Release,
+            }]
+        );
+    }
+
+
+    #[test]
+    fn handles_arashs_arrow_up_key_binding_release_modifier_first() {
+        let mut machine = Machine::new(&vec![Mapping::Remap {
+            input: HashSet::from([EV_KEY::KEY_RIGHTALT, EV_KEY::KEY_K]),
+            output: HashSet::from([EV_KEY::KEY_UP]),
+        }]);
+
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_K,
+                key_event_type: KeyEventType::Press,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_UP,
+                key_event_type: KeyEventType::Press,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Release,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Release,
+            }]
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_K,
+                key_event_type: KeyEventType::Release,
+            }),
+            vec![EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_UP,
+                key_event_type: KeyEventType::Release,
+            }]
+        );
+    }
 }
