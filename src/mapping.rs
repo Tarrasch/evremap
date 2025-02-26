@@ -33,11 +33,24 @@ impl MappingConfig {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Mapping {
-    // Arash note: I removed DualRole to simplify the code base.
     Remap {
-        input: HashSet<KeyCode>,
-        output: HashSet<KeyCode>,
+        input: KeyCode,
+        modifiers: HashSet<Modifier>,
+        output: KeyCode,
     },
+}
+
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash)]
+pub enum Modifier {
+    Fn,
+    LeftAlt,
+    RightAlt,
+    LeftMeta,
+    RightMeta,
+    LeftCtrl,
+    RightCtrl,
+    LeftShift,
+    RightShift,
 }
 
 #[derive(Debug, Deserialize)]
@@ -46,11 +59,22 @@ struct KeyCodeWrapper {
     pub code: KeyCode,
 }
 
+// #[derive(Debug, Deserialize)]
+// struct ModifierWrapper {
+//     pub modifier: Modifier,
+// }
+
 impl Into<KeyCode> for KeyCodeWrapper {
     fn into(self) -> KeyCode {
         self.code
     }
 }
+
+// impl Into<Modifier> for ModifierWrapper {
+//     fn into(self) -> Modifier {
+//         self.modifier
+//     }
+// }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {
@@ -75,15 +99,18 @@ impl std::convert::TryFrom<String> for KeyCodeWrapper {
 
 #[derive(Debug, Deserialize)]
 struct RemapConfig {
-    input: Vec<KeyCodeWrapper>,
-    output: Vec<KeyCodeWrapper>,
+    input: KeyCodeWrapper,
+    #[serde(default)]
+    modifiers: Vec<Modifier>,
+    output: KeyCodeWrapper,
 }
 
 impl Into<Mapping> for RemapConfig {
     fn into(self) -> Mapping {
         Mapping::Remap {
-            input: self.input.into_iter().map(Into::into).collect(),
-            output: self.output.into_iter().map(Into::into).collect(),
+            input: Into::into(self.input),
+            modifiers: self.modifiers.into_iter().collect(),
+            output: Into::into(self.output),
         }
     }
 }
