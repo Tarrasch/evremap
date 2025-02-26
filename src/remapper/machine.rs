@@ -150,6 +150,51 @@ mod tests {
     }
 
     #[test]
+    fn machine_without_config_handles_repeats() {
+        let mut machine = Machine::new(&vec![]);
+        assert_machine_insertion_yields_same_event!(
+            machine,
+            EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_0,
+                key_event_type: KeyEventType::Press,
+            }
+        );
+        assert_machine_insertion_yields_same_event!(
+            machine,
+            EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_0,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_machine_insertion_yields_same_event!(
+            machine,
+            EvKeyEvent {
+                time: create_timeval(210),
+                ev_key: EV_KEY::KEY_0,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_machine_insertion_yields_same_event!(
+            machine,
+            EvKeyEvent {
+                time: create_timeval(220),
+                ev_key: EV_KEY::KEY_0,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_machine_insertion_yields_same_event!(
+            machine,
+            EvKeyEvent {
+                time: create_timeval(320),
+                ev_key: EV_KEY::KEY_0,
+                key_event_type: KeyEventType::Release,
+            }
+        );
+    }
+
+    #[test]
     fn machine_without_config_passthrough_for_two_presses() {
         let mut machine = Machine::new(&vec![]);
         assert_machine_insertion_yields_same_event!(
@@ -427,6 +472,147 @@ mod tests {
                 time: create_timeval(300),
                 ev_key: EV_KEY::KEY_UP,
                 key_event_type: KeyEventType::Release,
+            }
+        );
+    }
+
+    #[test]
+    fn handles_repeating() {
+        let mut machine = Machine::new(&vec![Mapping::Remap {
+            input: EV_KEY::KEY_T,
+            modifiers: HashSet::from([Modifier::RightAlt]),
+            output: EV_KEY::KEY_RIGHT,
+        }]);
+
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }),
+            EvKeyEvent {
+                time: create_timeval(50),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Press,
+            }),
+            EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_RIGHT,
+                key_event_type: KeyEventType::Press,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(110),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }),
+            EvKeyEvent {
+                time: create_timeval(110),
+                ev_key: EV_KEY::KEY_RIGHT,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(120),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }),
+            EvKeyEvent {
+                time: create_timeval(120),
+                ev_key: EV_KEY::KEY_RIGHT,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+    }
+
+    #[test]
+    fn keeps_repeating_key_without_modifiers_once_started() {
+        let mut machine = Machine::new(&vec![Mapping::Remap {
+            input: EV_KEY::KEY_T,
+            modifiers: HashSet::from([Modifier::RightAlt]),
+            output: EV_KEY::KEY_RIGHT,
+        }]);
+
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Press,
+            }),
+            EvKeyEvent {
+                time: create_timeval(100),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Press,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }),
+            EvKeyEvent {
+                time: create_timeval(200),
+                ev_key: EV_KEY::KEY_RIGHTALT,
+                key_event_type: KeyEventType::Press,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(210),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }),
+            EvKeyEvent {
+                time: create_timeval(210),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(220),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }),
+            EvKeyEvent {
+                time: create_timeval(220),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Repeat,
+            }
+        );
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Release,
+            }),
+            EvKeyEvent {
+                time: create_timeval(300),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Release,
+            }
+        );
+        // Pressing down again we now keep the modifier keys.
+        assert_eq!(
+            machine.insert(EvKeyEvent {
+                time: create_timeval(400),
+                ev_key: EV_KEY::KEY_T,
+                key_event_type: KeyEventType::Press,
+            }),
+            EvKeyEvent {
+                time: create_timeval(400),
+                ev_key: EV_KEY::KEY_RIGHT,
+                key_event_type: KeyEventType::Press,
             }
         );
     }
