@@ -25,4 +25,23 @@ sudo ~/repos/evremap/target/release/evremap remap ~/dotfiles/swedish_colemak/ara
 # Debugging keys and stuff
 sudo ~/repos/evremap/target/release/evremap list-devices
 sudo ~/repos/evremap/target/release/evremap debug-events --device-name='AT Translated Set 2 keyboard'
+
+```
+
+## Installation
+
+You must first build from source to get the binary. Basically `cargo build --release`.
+
+```{bash}
+cargo build --release
+
+# Copy over files with names making clear it's a modified evremap.
+sudo cp ~/repos/evremap/evremap.service /usr/lib/systemd/system/arash_evremap.service
+sudo cp ~/repos/evremap/target/release/evremap /usr/local/bin/arash_evremap
+sudo cp ~/dotfiles/swedish_colemak/arash_swedish_colemak.toml /etc/evremap.toml
+
+# And now do the systemd restart and setup.
+sudo systemctl daemon-reload
+sudo systemctl enable arash_evremap.service
+sudo systemctl start arash_evremap.service
 ```
